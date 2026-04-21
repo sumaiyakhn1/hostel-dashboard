@@ -34,6 +34,7 @@ export default function HostelDashboard() {
   });
 
   const [student, setStudent] = useState<any>(null);
+  const [localStatus, setLocalStatus] = useState<string>("");
   const [fetchingStudent, setFetchingStudent] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
   const [fetchingRooms, setFetchingRooms] = useState(false);
@@ -80,6 +81,12 @@ export default function HostelDashboard() {
             endDate: data.hostelEndDate?.split("T")[0] || "",
           }));
         }
+      }
+
+      // Also check local database status
+      const localData = await hostelService.getStudentFromDB(form.regNo);
+      if (localData) {
+        setLocalStatus(localData.status || "pending");
       }
     } catch (err) {
       console.error("Error fetching student:", err);
@@ -176,9 +183,7 @@ export default function HostelDashboard() {
 
     setLoading(true);
     try {
-      await hostelService.assignHostelRoom(payload);
-
-      // Save to local MongoDB
+      // Save to local MongoDB only
       await hostelService.saveStudentToDB(form.regNo, {
         session: form.session,
         wing: form.hostel,
@@ -189,11 +194,12 @@ export default function HostelDashboard() {
         startDate: form.startDate,
         endDate: form.endDate,
       });
+      alert("Application submitted successfully! Please wait for Warden approval.");
     } catch (error: any) {
       if (error.response?.status === 409) {
-        alert("⚠️ You are already registered! Data will not be saved again.");
+        alert("⚠️ You are already registered!");
       } else {
-        alert("Failed to assign room.");
+        alert("Failed to submit request.");
       }
     } finally {
       setLoading(false);
@@ -238,6 +244,15 @@ export default function HostelDashboard() {
       {/* Decorative Elements */}
       <div className="absolute top-[-5%] right-[-5%] w-[40rem] h-[40rem] bg-slate-300 rounded-full blur-[150px] opacity-30" />
       <div className="absolute bottom-[-5%] left-[-5%] w-[30rem] h-[30rem] bg-slate-400 rounded-full blur-[120px] opacity-20" />
+
+      {localStatus === "assigned" && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
+          <div className="bg-emerald-600 text-white px-8 py-3 rounded-full shadow-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 border-4 border-emerald-500/50">
+            <span className="text-xl">🏠</span>
+            Welcome! Your hostel has been assigned to you.
+          </div>
+        </div>
+      )}
 
       <div className="w-full max-w-7xl bg-white/40 backdrop-blur-3xl rounded-[3rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] border border-white/70 relative z-10 flex flex-col md:flex-row overflow-hidden max-h-[95vh]">
         {/* Branding Sidebar */}
@@ -479,7 +494,7 @@ export default function HostelDashboard() {
                       d="M5 13l4 4L19 7"
                     ></path>
                   </svg>
-                  Confirm & Assign Room
+                  Confirm & Submit Request
                 </button>
               </div>
             </div>

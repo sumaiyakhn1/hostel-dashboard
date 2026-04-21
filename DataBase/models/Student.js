@@ -13,7 +13,11 @@ const studentSchema = new mongoose.Schema({
     roomType: String,
     paymentFreq: String,
     startDate: String,
-    endDate: String
+    endDate: String,
+    status: {
+        type: String,
+        default: "pending" // pending, assigned
+    }
 });
 
 export default mongoose.model("StudentData", studentSchema);

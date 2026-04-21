@@ -74,5 +74,20 @@ export const hostelService = {
   }) => {
     const response = await localApi.post(`/api/students/${regNumber}`, data);
     return response.data;
+  },
+
+  getAllSavedStudents: async () => {
+    const response = await localApi.get(`/api/students`);
+    return response.data;
+  },
+
+  updateStudentInDB: async (regNumber: string, data: any) => {
+    const response = await localApi.patch(`/api/students/${regNumber}`, data);
+    return response.data;
+  },
+
+  getStudentFromDB: async (regNumber: string) => {
+    const response = await localApi.get(`/api/students/${regNumber}`);
+    return response.data;
   }
 };
