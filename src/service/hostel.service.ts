@@ -1,17 +1,17 @@
 import axios from "axios";
 
-// Switch between these as needed
+
 const ENV = "qa"; // Or "production"
 
-const BASE_URL = ENV === "qa" 
-  ? "https://staging.odpay.in" 
-  : "https://api.odpay.in"; // Placeholder for production URL
+const BASE_URL = ENV === "qa"
+  ? "https://staging.odpay.in"
+  : "https://api.odpay.in";
 
 const api = axios.create({
   baseURL: BASE_URL,
 });
 
-// Request interceptor to automatically add the token
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
   if (token) {
