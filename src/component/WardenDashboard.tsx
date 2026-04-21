@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { hostelService } from "../service/hostel.service";
 
 interface StudentRecord {
@@ -31,7 +31,6 @@ export default function WardenDashboard() {
   const [editForm, setEditForm] = useState<any>(null);
   const [masterData, setMasterData] = useState<MasterData | null>(null);
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
-  const [fetchingRooms, setFetchingRooms] = useState(false);
   
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -66,7 +65,6 @@ export default function WardenDashboard() {
   // Fetch Available Rooms based on selection in edit form
   const fetchRoomsForEdit = async (wing: string, type: string, session: string) => {
     if (!wing || !type || !session) return;
-    setFetchingRooms(true);
     try {
       const data = await hostelService.getHostelRooms({
         entity: ENTITY_ID,
@@ -79,7 +77,7 @@ export default function WardenDashboard() {
     } catch (err) {
       console.error("Error fetching rooms:", err);
     } finally {
-      setFetchingRooms(false);
+      // Done fetching
     }
   };
 
