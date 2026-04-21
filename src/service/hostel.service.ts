@@ -1,6 +1,5 @@
 import axios from "axios";
 
-
 const ENV = "qa"; // Or "production"
 
 const BASE_URL = ENV === "qa"
@@ -11,6 +10,10 @@ const api = axios.create({
   baseURL: BASE_URL,
 });
 
+// Local Backend API for MongoDB saving
+const localApi = axios.create({
+  baseURL: "http://localhost:5000",
+});
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
@@ -55,6 +58,21 @@ export const hostelService = {
 
   assignHostelRoom: async (payload: any) => {
     const response = await api.post(`/api/assignToStudent/hostelRoom`, payload);
+    return response.data;
+  },
+
+  // Save student data to local MongoDB
+  saveStudentToDB: async (regNumber: string, data: {
+    session: string;
+    wing: string;
+    roomNo: string;
+    bedNo: string;
+    roomType: string;
+    paymentFreq: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    const response = await localApi.post(`/api/students/${regNumber}`, data);
     return response.data;
   }
 };
