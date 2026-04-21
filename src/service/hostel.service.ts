@@ -29,6 +29,18 @@ export const hostelService = {
     return response.data;
   },
 
+  sendOTP: async (mobile: string) => {
+    const response = await api.get(`/api/sendLogin/otp`, { params: { mobile } });
+    return response.data;
+  },
+
+  verifyOTP: async (mobile: string, otp: string) => {
+    const response = await api.get(`/api/verify/otp`, {
+      params: { mobile, otp, source: "erp" }
+    });
+    return response.data;
+  },
+
   getHostelMaster: async (entityId: string) => {
     const response = await api.get(`/api/view/hostelMaster`, {
       params: { entity: entityId }
