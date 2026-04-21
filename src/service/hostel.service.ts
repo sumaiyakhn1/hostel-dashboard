@@ -10,9 +10,9 @@ const api = axios.create({
   baseURL: BASE_URL,
 });
 
-// Local Backend API for MongoDB saving
+// Local/Deployed Backend API for MongoDB saving
 const localApi = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000",
 });
 
 api.interceptors.request.use((config) => {
