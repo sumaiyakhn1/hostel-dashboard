@@ -41,9 +41,7 @@ export default function HostelDashboard() {
 
   const [student, setStudent] = useState<any>(null);
   const [localStatus, setLocalStatus] = useState<string>("");
-  const [fetchingStudent, setFetchingStudent] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
-  const [fetchingRooms, setFetchingRooms] = useState(false);
   
   // Custom UI States
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -74,7 +72,6 @@ export default function HostelDashboard() {
   // Fetch Student Data
   const fetchStudent = async () => {
     if (!form.regNo) return;
-    setFetchingStudent(true);
     try {
       const data = await hostelService.getStudentDetails({
         id: "689441d9d2b728001069ebe7",
@@ -101,14 +98,11 @@ export default function HostelDashboard() {
       }
     } catch (err) {
       console.error("Error fetching student:", err);
-    } finally {
-      setFetchingStudent(false);
     }
   };
 
   const fetchRooms = async () => {
     if (!form.hostel || !form.roomType) return;
-    setFetchingRooms(true);
     try {
       const data = await hostelService.getHostelRooms({
         entity: "6608ec3120337200120f347e",
@@ -120,8 +114,6 @@ export default function HostelDashboard() {
       setAvailableRooms(rooms);
     } catch (err) {
       console.error("Error fetching rooms:", err);
-    } finally {
-      setFetchingRooms(false);
     }
   };
 
@@ -195,7 +187,7 @@ export default function HostelDashboard() {
     );
   }
 
-  const getGlassClass = (value: string, isSpecial?: boolean) => {
+  const getGlassClass = (value: string) => {
     const base = "glass-input-premium transition-all duration-300 ";
     const state = isLocked ? "opacity-60 cursor-not-allowed bg-slate-50/50 " : (value ? "bg-white/80 border-slate-200 shadow-sm" : "bg-white/40 border-white/60");
     return `${base} ${state}`;
