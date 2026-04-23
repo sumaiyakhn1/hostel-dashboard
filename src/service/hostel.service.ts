@@ -2,9 +2,8 @@ import axios from "axios";
 
 const ENV = "qa"; // Or "production"
 
-const BASE_URL = ENV === "qa"
-  ? "https://staging.odpay.in"
-  : "https://api.odpay.in";
+const BASE_URL =
+  ENV === "qa" ? "https://staging.odpay.in" : "https://api.odpay.in";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -30,20 +29,22 @@ export const hostelService = {
   },
 
   sendOTP: async (mobile: string) => {
-    const response = await api.get(`/api/sendLogin/otp`, { params: { mobile } });
+    const response = await api.get(`/api/sendLogin/otp`, {
+      params: { mobile },
+    });
     return response.data;
   },
 
   verifyOTP: async (mobile: string, otp: string) => {
     const response = await api.get(`/api/verify/otp`, {
-      params: { mobile, otp, source: "erp" }
+      params: { mobile, otp, source: "erp" },
     });
     return response.data;
   },
 
   getHostelMaster: async (entityId: string) => {
     const response = await api.get(`/api/view/hostelMaster`, {
-      params: { entity: entityId }
+      params: { entity: entityId },
     });
     return response.data;
   },
@@ -74,16 +75,21 @@ export const hostelService = {
   },
 
   // Save student data to local MongoDB
-  saveStudentToDB: async (regNumber: string, data: {
-    session: string;
-    wing: string;
-    roomNo: string;
-    bedNo: string;
-    roomType: string;
-    paymentFreq: string;
-    startDate: string;
-    endDate: string;
-  }) => {
+  saveStudentToDB: async (
+    regNumber: string,
+    data: {
+      name?: string;
+      session: string;
+      wing: string;
+      roomNo: string;
+      bedNo: string;
+      roomType: string;
+      paymentFreq: string;
+      startDate: string;
+      endDate: string;
+      remark?: string;
+    },
+  ) => {
     const response = await localApi.post(`/api/students/${regNumber}`, data);
     return response.data;
   },
@@ -101,5 +107,5 @@ export const hostelService = {
   getStudentFromDB: async (regNumber: string) => {
     const response = await localApi.get(`/api/students/${regNumber}`);
     return response.data;
-  }
+  },
 };
