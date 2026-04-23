@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { hostelService } from "../service/hostel.service";
+import logo from "../assets/logo.png";
 
 interface HostelMasterData {
   hostel: string[];
@@ -552,14 +553,14 @@ export default function HostelDashboard() {
               className="flex items-center gap-3 cursor-pointer"
             >
               <div className="w-9 h-9 bg-white/25 rounded-xl flex items-center justify-center font-black text-lg text-white shadow-md">
-                H
+                <img src={logo} alt="my pic" />
               </div>
               <div>
-                <p className="font-black text-white text-sm italic uppercase tracking-tight leading-none">
-                  StayHub
+                <p className="font-black text-white text-sm uppercase tracking-tight leading-none">
+                  Okie Dokie
                 </p>
                 <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest">
-                  Developed By Okie Dokie
+                  Hostel Management
                 </p>
               </div>
             </div>
@@ -587,15 +588,15 @@ export default function HostelDashboard() {
               onClick={() => (window.location.href = "/")}
               className="flex items-center gap-3 mb-12 cursor-pointer group w-fit"
             >
-              <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-lg group-hover:bg-white/30 transition-all group-hover:scale-105">
-                H
+              <div className="w-11 h-11 flex items-center justify-center font-black text-xl">
+                <img className=" rounded-2xl" src={logo} alt="my pic" />
               </div>
               <div>
-                <p className="font-black text-white text-lg italic uppercase tracking-tight leading-none">
-                  StayHub
+                <p className="font-black text-white text-xl uppercase tracking-tight leading-none">
+                  Okie Dokie
                 </p>
                 <p className="text-white/55 text-[9px] font-bold uppercase tracking-widest mt-0.5">
-                  Developed By Okie Dokie
+                  Hostel Management
                 </p>
               </div>
             </div>
@@ -606,12 +607,10 @@ export default function HostelDashboard() {
                 Student Portal
               </p>
               <h1
-                className="font-black leading-[0.85] tracking-tighter text-white mb-8"
-                style={{ fontSize: "clamp(2.4rem, 3.5vw, 3.2rem)" }}
+                className="font-black leading-[0.9] tracking-tighter text-white mb-8"
+                style={{ fontSize: "clamp(1.6rem, 2.5vw, 2.2rem)" }}
               >
-                Hostel
-                <br />
-                Room
+                Hostel Room
                 <br />
                 <span
                   className="text-white/40"
@@ -659,7 +658,7 @@ export default function HostelDashboard() {
             {/* Footer */}
             <div className="border-t border-white/15 pt-5 mt-6">
               <p className="text-white/25 text-[9px] font-bold uppercase tracking-widest">
-                © 2024 Hostel Management
+                © 2024 Okie Dokie
               </p>
             </div>
           </div>
@@ -667,39 +666,6 @@ export default function HostelDashboard() {
 
         {/* ── MAIN ── */}
         <main className="flex-1 flex flex-col">
-          {/* Status banner */}
-          {localStatus && (
-            <div
-              className={`w-full px-5 py-3 flex flex-col items-center justify-center gap-1 text-[10px] font-black uppercase tracking-widest text-white`}
-              style={{
-                background:
-                  localStatus === "approved" || localStatus === "assigned"
-                    ? "#10b981"
-                    : localStatus === "rejected"
-                      ? "#ef4444"
-                      : ACCENT,
-              }}
-            >
-              <div className="flex items-center gap-2">
-                {localStatus === "approved" || localStatus === "assigned"
-                  ? "🎉"
-                  : localStatus === "rejected"
-                    ? "❌"
-                    : "⏳"}
-                {localStatus === "approved" || localStatus === "assigned"
-                  ? "Room Approved by Warden!"
-                  : localStatus === "rejected"
-                    ? "Application Rejected by Warden"
-                    : "Pending Warden Approval — No changes allowed"}
-              </div>
-              {localStatus === "rejected" && rejectRemark && (
-                <div className="text-white/90 font-semibold normal-case tracking-normal text-[11px]">
-                  Reason: {rejectRemark}
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="flex-1 px-4 sm:px-8 lg:px-12 xl:px-16 py-8 lg:py-12 max-w-3xl w-full mx-auto">
             {/* Page title */}
             <div className="mb-8">
@@ -710,6 +676,64 @@ export default function HostelDashboard() {
                 Fill in the form below to request a hostel room.
               </p>
             </div>
+
+            {/* Status alert — inline, below title */}
+            {localStatus && (
+              <div
+                className="mb-6 rounded-2xl px-5 py-4 flex items-start gap-4 border"
+                style={{
+                  background:
+                    localStatus === "approved" || localStatus === "assigned"
+                      ? "#f0fdf4"
+                      : localStatus === "rejected"
+                        ? "#fff1f2"
+                        : "#fffbeb",
+                  borderColor:
+                    localStatus === "approved" || localStatus === "assigned"
+                      ? "#bbf7d0"
+                      : localStatus === "rejected"
+                        ? "#fecdd3"
+                        : "#fde68a",
+                }}
+              >
+                <span className="text-2xl flex-shrink-0 mt-0.5">
+                  {localStatus === "approved" || localStatus === "assigned"
+                    ? "🎉"
+                    : localStatus === "rejected"
+                      ? "❌"
+                      : "⏳"}
+                </span>
+                <div>
+                  <p
+                    className="text-sm font-black uppercase tracking-wide"
+                    style={{
+                      color:
+                        localStatus === "approved" || localStatus === "assigned"
+                          ? "#15803d"
+                          : localStatus === "rejected"
+                            ? "#be123c"
+                            : "#92400e",
+                    }}
+                  >
+                    {localStatus === "approved" || localStatus === "assigned"
+                      ? "Room Approved by Warden!"
+                      : localStatus === "rejected"
+                        ? "Application Rejected by Warden"
+                        : "Pending Warden Approval"}
+                  </p>
+                  {localStatus === "rejected" && rejectRemark && (
+                    <p className="text-xs text-rose-600 font-semibold mt-1">
+                      Reason: {rejectRemark}
+                    </p>
+                  )}
+                  {localStatus === "pending" && (
+                    <p className="text-xs text-amber-700 font-medium mt-0.5 opacity-75">
+                      No changes allowed until reviewed
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Progress bar */}
             <div className="mb-8">

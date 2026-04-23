@@ -304,7 +304,8 @@ export default function WardenDashboard() {
       <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 mb-1">
-            Warden <span className="text-red-600 italic">ERP Portal</span>
+            <span style={{ color: "rgb(237,128,65)" }}> Okie Dokie</span>{" "}
+            <span className="italic">Warden ERP Portal</span>
           </h1>
           <p className="text-slate-500 font-bold text-xs uppercase tracking-widest bg-white/50 px-3 py-1 rounded-full border border-slate-200 inline-block">
             Managed Allocation System
