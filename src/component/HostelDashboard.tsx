@@ -279,7 +279,8 @@ export default function HostelDashboard() {
   const isLocked =
     localStatus === "pending" ||
     localStatus === "approved" ||
-    localStatus === "rejected";
+    localStatus === "rejected" ||
+    localStatus === "assigned";
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -669,7 +670,7 @@ export default function HostelDashboard() {
           {/* Status banner */}
           {localStatus && (
             <div
-              className={`w-full px-5 py-3 flex items-center justify-center gap-2.5 text-[10px] font-black uppercase tracking-widest text-white`}
+              className={`w-full px-5 py-3 flex flex-col items-center justify-center gap-1 text-[10px] font-black uppercase tracking-widest text-white`}
               style={{
                 background:
                   localStatus === "approved" || localStatus === "assigned"
@@ -679,16 +680,23 @@ export default function HostelDashboard() {
                       : ACCENT,
               }}
             >
-              {localStatus === "approved" || localStatus === "assigned"
-                ? "🎉"
-                : localStatus === "rejected"
-                  ? "❌"
-                  : "⏳"}
-              {localStatus === "approved" || localStatus === "assigned"
-                ? "Room Approved by Warden!"
-                : localStatus === "rejected"
-                  ? `Application Rejected${rejectRemark ? ` — ${rejectRemark}` : ""}`
-                  : "Pending Warden Approval — No changes allowed"}
+              <div className="flex items-center gap-2">
+                {localStatus === "approved" || localStatus === "assigned"
+                  ? "🎉"
+                  : localStatus === "rejected"
+                    ? "❌"
+                    : "⏳"}
+                {localStatus === "approved" || localStatus === "assigned"
+                  ? "Room Approved by Warden!"
+                  : localStatus === "rejected"
+                    ? "Application Rejected by Warden"
+                    : "Pending Warden Approval — No changes allowed"}
+              </div>
+              {localStatus === "rejected" && rejectRemark && (
+                <div className="text-white/90 font-semibold normal-case tracking-normal text-[11px]">
+                  Reason: {rejectRemark}
+                </div>
+              )}
             </div>
           )}
 
@@ -758,16 +766,34 @@ export default function HostelDashboard() {
                 )}
               </div>
               {localStatus && (
-                <span
-                  className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
-                  style={{
-                    background:
-                      localStatus === "assigned" ? "#ecfdf5" : ACCENT_LIGHT,
-                    color: localStatus === "assigned" ? "#059669" : ACCENT,
-                  }}
-                >
-                  {localStatus}
-                </span>
+                <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                  <span
+                    className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                    style={{
+                      background:
+                        localStatus === "rejected"
+                          ? "#fee2e2"
+                          : localStatus === "approved" ||
+                              localStatus === "assigned"
+                            ? "#ecfdf5"
+                            : ACCENT_LIGHT,
+                      color:
+                        localStatus === "rejected"
+                          ? "#dc2626"
+                          : localStatus === "approved" ||
+                              localStatus === "assigned"
+                            ? "#059669"
+                            : ACCENT,
+                    }}
+                  >
+                    {localStatus}
+                  </span>
+                  {localStatus === "rejected" && rejectRemark && (
+                    <span className="text-[10px] text-red-500 font-bold text-right max-w-[160px] leading-tight">
+                      {rejectRemark}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -945,7 +971,9 @@ export default function HostelDashboard() {
                   <Icon.Lock />
                   <span>
                     Application{" "}
-                    {localStatus === "assigned" ? "Finalized" : "Under Review"}
+                    {localStatus === "approved" || localStatus === "assigned"
+                      ? "Finalized"
+                      : "Under Review"}
                   </span>
                 </>
               ) : loading ? (
