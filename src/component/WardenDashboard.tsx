@@ -35,6 +35,7 @@ export default function WardenDashboard() {
   const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(
     null,
   );
+  const [selectedErpStudent, setSelectedErpStudent] = useState<any>(null);
   const [masterData, setMasterData] = useState<MasterData | null>(null);
 
   const [approveStartDate, setApproveStartDate] = useState("");
@@ -203,14 +204,27 @@ export default function WardenDashboard() {
     }
   };
 
-  const handleStudentClick = (student: StudentRecord) => {
+  const handleStudentClick = async (student: StudentRecord) => {
     setSelectedStudent(student);
+    setSelectedErpStudent(null);
     setApproveStartDate(student.startDate || "");
     setApproveEndDate(student.endDate || "");
     setApprovePaymentFreq(student.paymentFreq || "");
     setRejectRemark("");
     setShowRejectBox(false);
     if (!masterData) fetchMasterData();
+
+    try {
+      const erpData = await hostelService.getStudentDetails({
+        id: "689441d9d2b728001069ebe7",
+        entity: ENTITY_ID,
+        session: student.session,
+        regNo: student.regNumber,
+      });
+      if (erpData) setSelectedErpStudent(erpData);
+    } catch (err) {
+      console.error("Error fetching ERP student details:", err);
+    }
   };
 
   const closeModal = () => {
@@ -415,15 +429,43 @@ export default function WardenDashboard() {
         <div className="lg:col-span-2">
           {selectedStudent ? (
             <div className="bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl overflow-hidden">
-              <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-slate-900">
+              <div className="px-8 py-5 border-b border-slate-100 flex items-start justify-between">
+                <div className="flex-1 pr-4">
+                  <h2 className="text-xl font-black text-slate-900 mb-1">
                     {selectedStudent.name || "Student Detail"}
                   </h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    {selectedStudent.regNumber} · Applied:{" "}
-                    {formatDate(selectedStudent.applyDate)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
+                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                      {selectedStudent.regNumber}
+                    </span>
+                    <span>·</span>
+                    <span>Applied: {formatDate(selectedStudent.applyDate)}</span>
+                  </div>
+
+                  {(selectedErpStudent?.course || selectedErpStudent?.stream) && (
+                    <p className="text-xs font-bold text-slate-700 mb-1.5">
+                      {selectedErpStudent.course}
+                      {selectedErpStudent.stream ? ` • ${selectedErpStudent.stream}` : ""}
+                    </p>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500">
+                    {selectedErpStudent?.batch && (
+                      <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        Batch: {selectedErpStudent.batch}
+                      </span>
+                    )}
+                    {selectedErpStudent?.section && (
+                      <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        Sec: {selectedErpStudent.section}
+                      </span>
+                    )}
+                    {selectedErpStudent?.phone && (
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span>📞</span> {selectedErpStudent.phone}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={closeModal}

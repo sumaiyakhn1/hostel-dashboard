@@ -193,6 +193,8 @@ export default function HostelDashboard() {
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [hasExistingRecord, setHasExistingRecord] = useState(false);
+  const [hasReapplied, setHasReapplied] = useState(false);
 
   const addNotification = (
     message: string,
@@ -233,6 +235,8 @@ export default function HostelDashboard() {
       if (data) setStudent(data);
       const localData = await hostelService.getStudentFromDB(form.regNo);
       if (localData) {
+        setHasExistingRecord(true);
+        if (localData.hasReapplied) setHasReapplied(true);
         setLocalStatus(localData.status || "pending");
         if (localData.rejectRemark) setRejectRemark(localData.rejectRemark);
         setForm((prev) => ({
@@ -279,6 +283,7 @@ export default function HostelDashboard() {
 
   const isLocked =
     localStatus === "pending" ||
+    localStatus === "reapplied" ||
     localStatus === "approved" ||
     localStatus === "rejected" ||
     localStatus === "assigned";
@@ -294,7 +299,7 @@ export default function HostelDashboard() {
     setLoading(true);
     setShowConfirm(false);
     try {
-      await hostelService.saveStudentToDB(form.regNo, {
+      const payload = {
         name: student?.name || "",
         session: form.session,
         wing: form.hostel,
@@ -305,9 +310,18 @@ export default function HostelDashboard() {
         startDate: (form as any).startDate,
         endDate: (form as any).endDate,
         remark: form.remark || "",
-      });
+        status: hasExistingRecord ? "reapplied" : "pending",
+        hasReapplied: hasExistingRecord ? true : false,
+        rejectRemark: "",
+      };
+
+      if (hasExistingRecord) {
+        await hostelService.updateStudentInDB(form.regNo, payload);
+      } else {
+        await hostelService.saveStudentToDB(form.regNo, payload);
+      }
       addNotification("Request submitted! Pending approval.", "success");
-      setLocalStatus("pending");
+      setLocalStatus(hasExistingRecord ? "reapplied" : "pending");
     } catch (error: any) {
       addNotification(
         error.response?.status === 409
@@ -687,13 +701,17 @@ export default function HostelDashboard() {
                       ? "#f0fdf4"
                       : localStatus === "rejected"
                         ? "#fff1f2"
-                        : "#fffbeb",
+                        : localStatus === "reapplying"
+                          ? "#eff6ff"
+                          : "#fffbeb",
                   borderColor:
                     localStatus === "approved" || localStatus === "assigned"
                       ? "#bbf7d0"
                       : localStatus === "rejected"
                         ? "#fecdd3"
-                        : "#fde68a",
+                        : localStatus === "reapplying"
+                          ? "#bfdbfe"
+                          : "#fde68a",
                 }}
               >
                 <span className="text-2xl flex-shrink-0 mt-0.5">
@@ -701,7 +719,9 @@ export default function HostelDashboard() {
                     ? "🎉"
                     : localStatus === "rejected"
                       ? "❌"
-                      : "⏳"}
+                      : localStatus === "reapplying"
+                        ? "📝"
+                        : "⏳"}
                 </span>
                 <div>
                   <p
@@ -712,21 +732,32 @@ export default function HostelDashboard() {
                           ? "#15803d"
                           : localStatus === "rejected"
                             ? "#be123c"
-                            : "#92400e",
+                            : localStatus === "reapplying"
+                              ? "#1d4ed8"
+                              : "#92400e",
                     }}
                   >
                     {localStatus === "approved" || localStatus === "assigned"
                       ? "Room Approved by Warden!"
                       : localStatus === "rejected"
                         ? "Application Rejected by Warden"
-                        : "Pending Warden Approval"}
+                        : localStatus === "reapplying"
+                          ? "Re-applying Application"
+                          : localStatus === "reapplied"
+                            ? "Application Re-applied! Pending Review"
+                            : "Pending Warden Approval"}
                   </p>
                   {localStatus === "rejected" && rejectRemark && (
                     <p className="text-xs text-rose-600 font-semibold mt-1">
                       Reason: {rejectRemark}
                     </p>
                   )}
-                  {localStatus === "pending" && (
+                  {localStatus === "reapplying" && (
+                    <p className="text-xs text-blue-700 font-medium mt-0.5 opacity-75">
+                      Please update your details and submit again
+                    </p>
+                  )}
+                  {(localStatus === "pending" || localStatus === "reapplied") && (
                     <p className="text-xs text-amber-700 font-medium mt-0.5 opacity-75">
                       No changes allowed until reviewed
                     </p>
@@ -760,34 +791,72 @@ export default function HostelDashboard() {
             </div>
 
             {/* Student card */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-8 flex items-center gap-4 relative overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-8 flex flex-col md:flex-row items-start md:items-center gap-4 relative overflow-hidden">
               <div
-                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
+                className="absolute left-0 top-0 bottom-0 w-[4px] rounded-l-2xl"
                 style={{ background: ACCENT }}
               />
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center text-2xl border border-slate-100 ml-2 flex-shrink-0">
-                {student?.photo ? (
-                  <img
-                    src={student.photo}
-                    className="w-full h-full object-cover"
-                    alt="student"
-                  />
-                ) : (
-                  "🙎‍♂️"
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-900 text-sm truncate">
-                  {student?.name || "Student Profile"}
-                </p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                  {student?.regNo || urlRegNo}
-                </p>
-                {student?.branch && (
-                  <p className="text-[11px] text-slate-500 font-semibold mt-0.5 truncate">
-                    {student.branch}
+              <div className="flex items-center gap-4 w-full md:w-auto ml-1">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center text-3xl shadow-inner flex-shrink-0">
+                  {student?.photo ? (
+                    <img
+                      src={student.photo}
+                      className="w-full h-full object-cover"
+                      alt="student"
+                    />
+                  ) : (
+                    "🙎‍♂️"
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 md:hidden">
+                  <p className="font-black text-slate-900 text-base truncate">
+                    {student?.name || "Student Profile"}
                   </p>
-                )}
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                    {student?.regNo || urlRegNo}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="hidden md:block">
+                  <p className="font-black text-slate-900 text-base truncate">
+                    {student?.name || "Student Profile"}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                    {student?.regNo || urlRegNo}
+                  </p>
+                  {(student?.course || student?.stream) && (
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1 truncate">
+                      {student.course} • {student.stream}
+                    </p>
+                  )}
+                  {(student?.batch || student?.section) && (
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                      Batch: {student.batch} | Sec: {student.section}
+                    </p>
+                  )}
+                </div>
+                <div className="md:hidden">
+                  {(student?.course || student?.stream) && (
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1 truncate">
+                      {student.course} • {student.stream}
+                    </p>
+                  )}
+                  {(student?.batch || student?.section) && (
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                      Batch: {student.batch} | Sec: {student.section}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col justify-center md:items-end gap-1.5 md:mt-0 pt-3 md:pt-0 border-t border-slate-100 md:border-none">
+                  {student?.phone && (
+                    <p className="text-[11px] text-slate-600 font-semibold flex items-center gap-2">
+                      <span className="text-sm">📞</span> {student.phone}
+                    </p>
+                  )}
+                </div>
               </div>
               {localStatus && (
                 <div className="flex-shrink-0 flex flex-col items-end gap-1">
@@ -798,14 +867,14 @@ export default function HostelDashboard() {
                         localStatus === "rejected"
                           ? "#fee2e2"
                           : localStatus === "approved" ||
-                              localStatus === "assigned"
+                            localStatus === "assigned"
                             ? "#ecfdf5"
                             : ACCENT_LIGHT,
                       color:
                         localStatus === "rejected"
                           ? "#dc2626"
                           : localStatus === "approved" ||
-                              localStatus === "assigned"
+                            localStatus === "assigned"
                             ? "#059669"
                             : ACCENT,
                     }}
@@ -965,50 +1034,77 @@ export default function HostelDashboard() {
             )}
 
             {/* CTA button */}
-            <button
-              onClick={validateAndShowConfirm}
-              disabled={isLocked || loading}
-              className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-200"
-              style={{
-                background: isLocked
-                  ? "#f1f5f9"
-                  : `linear-gradient(135deg, rgb(237,128,65), rgb(255,150,75))`,
-                color: isLocked ? "#94a3b8" : "white",
-                boxShadow: isLocked
-                  ? "none"
-                  : `0 8px 32px rgba(237,128,65,0.38)`,
-                cursor: isLocked ? "not-allowed" : "pointer",
-                transform: "translateY(0)",
-              }}
-              onMouseEnter={(e) => {
-                if (!isLocked)
+            {localStatus === "rejected" && !hasReapplied ? (
+              <button
+                onClick={() => {
+                  setLocalStatus("reapplying");
+                  setForm((prev) => ({
+                    ...prev,
+                    hostel: "",
+                    roomType: "",
+                    roomNo: "",
+                    bedNo: "",
+                    remark: "",
+                  }));
+                }}
+                className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-200"
+                style={{
+                  background: `linear-gradient(135deg, rgb(237,128,65), rgb(255,150,75))`,
+                  color: "white",
+                  boxShadow: `0 8px 32px rgba(237,128,65,0.38)`,
+                }}
+              >
+                <span>Re-apply as New</span>
+                <Icon.Arrow />
+              </button>
+            ) : (
+              <button
+                onClick={validateAndShowConfirm}
+                disabled={isLocked || loading}
+                className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 relative overflow-hidden transition-all duration-200"
+                style={{
+                  background: isLocked
+                    ? "#f1f5f9"
+                    : `linear-gradient(135deg, rgb(237,128,65), rgb(255,150,75))`,
+                  color: isLocked ? "#94a3b8" : "white",
+                  boxShadow: isLocked
+                    ? "none"
+                    : `0 8px 32px rgba(237,128,65,0.38)`,
+                  cursor: isLocked ? "not-allowed" : "pointer",
+                  transform: "translateY(0)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLocked)
+                    (e.currentTarget as HTMLElement).style.transform =
+                      "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.transform =
-                    "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.transform =
-                  "translateY(0)";
-              }}
-            >
-              {isLocked ? (
-                <>
-                  <Icon.Lock />
-                  <span>
-                    Application{" "}
-                    {localStatus === "approved" || localStatus === "assigned"
-                      ? "Finalized"
-                      : "Under Review"}
-                  </span>
-                </>
-              ) : loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>Request Allocation</span>
-                  <Icon.Arrow />
-                </>
-              )}
-            </button>
+                    "translateY(0)";
+                }}
+              >
+                {isLocked ? (
+                  <>
+                    <Icon.Lock />
+                    <span>
+                      Application{" "}
+                      {localStatus === "approved" || localStatus === "assigned"
+                        ? "Finalized"
+                        : localStatus === "rejected"
+                          ? "Rejected Permanently"
+                          : "Under Review"}
+                    </span>
+                  </>
+                ) : loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>Request Allocation</span>
+                    <Icon.Arrow />
+                  </>
+                )}
+              </button>
+            )}
 
             <p className="text-center text-[10px] text-slate-400 font-medium mt-4 leading-relaxed">
               Subject to Warden approval · Cannot be modified after submission

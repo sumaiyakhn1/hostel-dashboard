@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Local/Deployed Backend API for MongoDB saving
 const localApi = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000",
+  baseURL: import.meta.env.VITE_BACKEND_URL || "https://hostel-dashboard-af3s.onrender.com",
 });
 
 api.interceptors.request.use((config) => {
@@ -77,18 +77,7 @@ export const hostelService = {
   // Save student data to local MongoDB
   saveStudentToDB: async (
     regNumber: string,
-    data: {
-      name?: string;
-      session: string;
-      wing: string;
-      roomNo: string;
-      bedNo: string;
-      roomType: string;
-      paymentFreq: string;
-      startDate: string;
-      endDate: string;
-      remark?: string;
-    },
+    data: any,
   ) => {
     const response = await localApi.post(`/api/students/${regNumber}`, data);
     return response.data;

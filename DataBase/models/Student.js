@@ -25,6 +25,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: "pending", // pending, approved, rejected
   },
+  hasReapplied: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.model("StudentData", studentSchema);
