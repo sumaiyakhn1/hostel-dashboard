@@ -195,6 +195,8 @@ export default function HostelDashboard() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [hasExistingRecord, setHasExistingRecord] = useState(false);
   const [hasReapplied, setHasReapplied] = useState(false);
+  const [erpHostelAssigned, setErpHostelAssigned] = useState(false);
+  const [erpHostelData, setErpHostelData] = useState<any>(null);
 
   const addNotification = (
     message: string,
@@ -232,7 +234,23 @@ export default function HostelDashboard() {
         session: form.session,
         regNo: form.regNo,
       });
-      if (data) setStudent(data);
+      if (data) {
+        setStudent(data);
+        // ✅ Check if ERP already has hostel assigned
+        if (data.hostel) {
+          setErpHostelAssigned(true);
+          setErpHostelData({
+            hostel: data.hostel,
+            roomType: data.hostelRoomType || "",
+            roomNo: data.hostelRoomName || "",
+            bedNo: data.hostelRoomBedName || "",
+            startDate: data.hostelStartDate || "",
+            endDate: data.hostelEndDate || "",
+            paymentFreq: data.hostelPaymentFrequency || "",
+          });
+          return; // No need to check local DB — ERP is source of truth
+        }
+      }
       const localData = await hostelService.getStudentFromDB(form.regNo);
       if (localData) {
         setHasExistingRecord(true);
@@ -687,9 +705,53 @@ export default function HostelDashboard() {
                 Room Allocation
               </h2>
               <p className="text-slate-400 text-sm mt-1 font-medium">
-                Fill in the form below to request a hostel room.
+                {erpHostelAssigned
+                  ? "Your hostel has already been assigned in the system."
+                  : "Fill in the form below to request a hostel room."}
               </p>
             </div>
+
+            {/* ── ERP Already Assigned card ── */}
+            {erpHostelAssigned && erpHostelData ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4 bg-emerald-600 flex items-center gap-3">
+                  <span className="text-2xl">🏠</span>
+                  <div>
+                    <p className="text-white font-black text-sm uppercase tracking-widest">
+                      Hostel Allocated
+                    </p>
+                    <p className="text-emerald-200 text-[10px] font-semibold mt-0.5">
+                      Assigned in ERP · No further applications required
+                    </p>
+                  </div>
+                </div>
+                {/* Details grid */}
+                <div className="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Hostel / Wing", value: erpHostelData.hostel },
+                    { label: "Room Type", value: erpHostelData.roomType },
+                    { label: "Room No", value: erpHostelData.roomNo },
+                    { label: "Bed", value: erpHostelData.bedNo },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                        {label}
+                      </p>
+                      <p className="text-base font-black text-slate-800">
+                        {value || "—"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-6 pb-5">
+                  <p className="text-xs text-emerald-700 font-semibold">
+                    ✓ This allocation is confirmed. Please contact the warden for any changes.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
 
             {/* Status alert — inline, below title */}
             {localStatus && (
@@ -1109,6 +1171,8 @@ export default function HostelDashboard() {
             <p className="text-center text-[10px] text-slate-400 font-medium mt-4 leading-relaxed">
               Subject to Warden approval · Cannot be modified after submission
             </p>
+            </>
+            )}
           </div>
         </main>
       </div>

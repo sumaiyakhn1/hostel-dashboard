@@ -532,162 +532,106 @@ export default function WardenDashboard() {
                   )}
                 </div>
 
-                {selectedStudent.status !== "approved" &&
-                  selectedStudent.status !== "assigned" &&
-                  selectedStudent.status !== "rejected" && (
-                    <>
-                      {/* Approve */}
-                      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 mb-4">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4">
-                          Approve Application
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 block mb-1">
-                              Start Date *
-                            </label>
-                            <input
-                              type="date"
-                              value={approveStartDate}
-                              onChange={(e) =>
-                                setApproveStartDate(e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-emerald-400 transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 block mb-1">
-                              End Date *
-                            </label>
-                            <input
-                              type="date"
-                              value={approveEndDate}
-                              onChange={(e) =>
-                                setApproveEndDate(e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-emerald-400 transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 block mb-1">
-                              Payment Frequency *
-                            </label>
-                            <select
-                              value={approvePaymentFreq}
-                              onChange={(e) =>
-                                setApprovePaymentFreq(e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-emerald-400 transition-all bg-white"
-                            >
-                              <option value="">Select...</option>
-                              {masterData?.paymentFrequency?.map((pf) => (
-                                <option key={pf} value={pf}>
-                                  {pf}
-                                </option>
-                              )) || (
-                                <>
-                                  <option value="Monthly">Monthly</option>
-                                  <option value="Quarterly">Quarterly</option>
-                                  <option value="Half Yearly">
-                                    Half Yearly
-                                  </option>
-                                  <option value="Yearly">Yearly</option>
-                                </>
-                              )}
-                            </select>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleApprove}
-                          disabled={!!processingId}
-                          className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all disabled:grayscale disabled:cursor-not-allowed"
-                        >
-                          {processingId ? "Processing..." : "✓ Approve"}
-                        </button>
+                {selectedStudent.status === "pending" && (
+                  <div className="border border-slate-100 rounded-2xl p-5">
+                    {/* Date + Payment row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={approveStartDate}
+                          onChange={(e) => setApproveStartDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-slate-400 transition-all"
+                        />
                       </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={approveEndDate}
+                          onChange={(e) => setApproveEndDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-slate-400 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                          Payment Frequency
+                        </label>
+                        <select
+                          value={approvePaymentFreq}
+                          onChange={(e) => setApprovePaymentFreq(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-slate-400 transition-all bg-white"
+                        >
+                          <option value="">Select...</option>
+                          {masterData?.paymentFrequency?.map((pf) => (
+                            <option key={pf} value={pf}>{pf}</option>
+                          )) || (
+                            <>
+                              <option value="Monthly">Monthly</option>
+                              <option value="Quarterly">Quarterly</option>
+                              <option value="Half Yearly">Half Yearly</option>
+                              <option value="Yearly">Yearly</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                    </div>
 
-                      {/* Reject */}
-                      <div className="bg-red-50 border border-red-100 rounded-2xl p-5">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-4">
-                          Reject Application
-                        </h3>
-                        {!showRejectBox ? (
+                    {/* Reject remark (expands inline) */}
+                    {showRejectBox && (
+                      <div className="mb-4">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                          Rejection Reason *
+                        </label>
+                        <textarea
+                          value={rejectRemark}
+                          onChange={(e) => setRejectRemark(e.target.value)}
+                          placeholder="Enter reason for rejection..."
+                          rows={2}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-red-300 transition-all resize-none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3 flex-wrap">
+                      {!showRejectBox ? (
+                        <>
+                          <button
+                            onClick={handleApprove}
+                            disabled={!!processingId}
+                            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all disabled:grayscale disabled:cursor-not-allowed"
+                          >
+                            {processingId ? "Processing..." : "✓ Approve"}
+                          </button>
                           <button
                             onClick={() => setShowRejectBox(true)}
-                            className="border-2 border-red-200 text-red-500 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-red-100 active:scale-95 transition-all"
+                            className="border border-slate-200 text-slate-500 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:border-red-300 hover:text-red-500 transition-all"
                           >
                             ✗ Reject
                           </button>
-                        ) : (
-                          <div>
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 block mb-2">
-                              Rejection Remark * (Required)
-                            </label>
-                            <textarea
-                              value={rejectRemark}
-                              onChange={(e) => setRejectRemark(e.target.value)}
-                              placeholder="Enter reason for rejection..."
-                              rows={3}
-                              className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-xs font-bold outline-none focus:border-red-400 transition-all resize-none mb-3"
-                            />
-                            <div className="flex gap-3">
-                              <button
-                                onClick={handleReject}
-                                disabled={
-                                  !!processingId || !rejectRemark.trim()
-                                }
-                                className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-red-200 hover:bg-red-700 active:scale-95 transition-all disabled:grayscale disabled:cursor-not-allowed"
-                              >
-                                {processingId
-                                  ? "Processing..."
-                                  : "Confirm Reject"}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowRejectBox(false);
-                                  setRejectRemark("");
-                                }}
-                                className="bg-white border border-slate-200 text-slate-400 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:text-slate-600 transition-all"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                {selectedStudent.status !== "rejected" && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
-                      ERP Actions
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {editingId === selectedStudent._id ? (
-                        <button
-                          onClick={handleSaveEdit}
-                          disabled={!!processingId}
-                          className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-700 active:scale-95 transition-all disabled:grayscale"
-                        >
-                          Save Changes
-                        </button>
+                        </>
                       ) : (
-                        <button
-                          onClick={() => handleEditClick(selectedStudent)}
-                          className="bg-white border-2 border-slate-200 text-slate-500 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:border-slate-400 transition-all"
-                        >
-                          Edit Record
-                        </button>
-                      )}
-                      {selectedStudent.status !== "assigned" && (
-                        <button
-                          onClick={() => handleAssignToERP(selectedStudent)}
-                          disabled={!!processingId}
-                          className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-red-200 hover:bg-red-700 active:scale-95 transition-all disabled:grayscale"
-                        >
-                          Assign ERP
-                        </button>
+                        <>
+                          <button
+                            onClick={handleReject}
+                            disabled={!!processingId || !rejectRemark.trim()}
+                            className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-red-700 active:scale-95 transition-all disabled:grayscale disabled:cursor-not-allowed"
+                          >
+                            {processingId ? "Processing..." : "Confirm Reject"}
+                          </button>
+                          <button
+                            onClick={() => { setShowRejectBox(false); setRejectRemark(""); }}
+                            className="border border-slate-200 text-slate-400 px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:text-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -911,48 +855,51 @@ export default function WardenDashboard() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-center gap-2">
-                        {editingId === student._id ? (
-                          <button
-                            onClick={handleSaveEdit}
-                            disabled={!!processingId}
-                            className="bg-slate-900 text-white p-2 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="3"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleEditClick(student)}
-                            className="bg-white border-2 border-slate-100 text-slate-400 p-2 rounded-xl hover:border-red-500 hover:text-red-500 transition-all font-black text-xs"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="3"
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                        {student.status !== "assigned" &&
-                          student.status !== "rejected" && (
+                        {/* Edit is locked once approved/assigned */}
+                        {student.status !== "approved" &&
+                          student.status !== "assigned" && (
+                            editingId === student._id ? (
+                              <button
+                                onClick={handleSaveEdit}
+                                disabled={!!processingId}
+                                className="bg-slate-900 text-white p-2 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="3"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleEditClick(student)}
+                                className="bg-white border-2 border-slate-100 text-slate-400 p-2 rounded-xl hover:border-red-500 hover:text-red-500 transition-all font-black text-xs"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="3"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                  />
+                                </svg>
+                              </button>
+                            )
+                          )}
+                        {student.status === "pending" && (
                             <button
                               onClick={() => handleAssignToERP(student)}
                               disabled={!!processingId}

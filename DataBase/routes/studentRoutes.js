@@ -51,6 +51,28 @@ router.post("/:regNumber", async (req, res) => {
 // Update student (for Warden)
 router.patch("/:regNumber", async (req, res) => {
     try {
+        const existing = await Student.findOne({ regNumber: req.params.regNumber });
+        if (!existing) {
+            return res.status(404).json({ message: "Student not found." });
+        }
+
+        // 🔒 Once approved/assigned, status cannot be rolled back
+        const lockedStatuses = ["approved", "assigned"];
+        if (lockedStatuses.includes(existing.status)) {
+            const incomingStatus = req.body.status;
+            // Only allow: approved → assigned (ERP push), or no status change at all
+            const isAllowed =
+                !incomingStatus ||
+                (existing.status === "approved" && incomingStatus === "assigned") ||
+                incomingStatus === existing.status;
+
+            if (!isAllowed) {
+                return res.status(403).json({
+                    message: `Cannot change status from '${existing.status}'. Approval is final.`,
+                });
+            }
+        }
+
         const student = await Student.findOneAndUpdate(
             { regNumber: req.params.regNumber },
             req.body,
