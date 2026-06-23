@@ -298,7 +298,7 @@ export default function HostelDashboard() {
       if (localData) {
         setHasExistingRecord(true);
         if (localData.hasReapplied) setHasReapplied(true);
-        setLocalStatus(localData.status || "pending");
+        setLocalStatus(localData.roomType === "Withdrawn" ? "withdrawn" : localData.status || "pending");
         if (localData.rejectRemark) setRejectRemark(localData.rejectRemark);
         setForm((prev) => ({
           ...prev,
@@ -364,6 +364,7 @@ export default function HostelDashboard() {
     localStatus === "reapplied" ||
     localStatus === "approved" ||
     localStatus === "rejected" ||
+    localStatus === "withdrawn" ||
     localStatus === "assigned";
 
   const handleChange = (
@@ -887,7 +888,9 @@ export default function HostelDashboard() {
                     className="mb-6 rounded-2xl px-5 py-4 flex items-start gap-4 border"
                     style={{
                       background:
-                        localStatus === "approved" || localStatus === "assigned"
+                        localStatus === "withdrawn"
+                          ? "#f8fafc"
+                          : localStatus === "approved" || localStatus === "assigned"
                           ? "#f0fdf4"
                           : localStatus === "rejected"
                             ? "#fff1f2"
@@ -895,7 +898,9 @@ export default function HostelDashboard() {
                               ? "#eff6ff"
                               : "#fffbeb",
                       borderColor:
-                        localStatus === "approved" || localStatus === "assigned"
+                        localStatus === "withdrawn"
+                          ? "#cbd5e1"
+                          : localStatus === "approved" || localStatus === "assigned"
                           ? "#bbf7d0"
                           : localStatus === "rejected"
                             ? "#fecdd3"
@@ -905,7 +910,9 @@ export default function HostelDashboard() {
                     }}
                   >
                     <span className="text-2xl flex-shrink-0 mt-0.5">
-                      {localStatus === "approved" || localStatus === "assigned"
+                      {localStatus === "withdrawn"
+                        ? "🛑"
+                        : localStatus === "approved" || localStatus === "assigned"
                         ? "🎉"
                         : localStatus === "rejected"
                           ? "❌"
@@ -918,7 +925,9 @@ export default function HostelDashboard() {
                         className="text-sm font-black uppercase tracking-wide"
                         style={{
                           color:
-                            localStatus === "approved" || localStatus === "assigned"
+                            localStatus === "withdrawn"
+                              ? "#64748b"
+                              : localStatus === "approved" || localStatus === "assigned"
                               ? "#15803d"
                               : localStatus === "rejected"
                                 ? "#be123c"
@@ -927,7 +936,9 @@ export default function HostelDashboard() {
                                   : "#92400e",
                         }}
                       >
-                        {localStatus === "approved" || localStatus === "assigned"
+                        {localStatus === "withdrawn"
+                          ? "Application Withdrawn"
+                          : localStatus === "approved" || localStatus === "assigned"
                           ? "Room Approved by Warden!"
                           : localStatus === "rejected"
                             ? "Application Rejected by Warden"

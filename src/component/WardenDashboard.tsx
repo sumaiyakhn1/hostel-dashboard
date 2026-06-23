@@ -655,7 +655,7 @@ export default function WardenDashboard() {
       (s.roomNo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.wing || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || getDisplayStatus(s) === statusFilter;
 
     // Compare date part only (YYYY-MM-DD)
     const matchesDate = !dateFilter || (s.applyDate && s.applyDate.startsWith(dateFilter));
@@ -674,7 +674,13 @@ export default function WardenDashboard() {
     });
   };
 
+  const getDisplayStatus = (student: StudentRecord) => {
+    if (student.roomType === "Withdrawn") return "withdrawn";
+    return student.status || "pending";
+  };
+
   const statusColor = (status: string) => {
+    if (status === "withdrawn") return "bg-slate-500 text-white shadow-lg shadow-slate-200";
     if (status === "approved" || status === "assigned")
       return "bg-emerald-500 text-white shadow-lg shadow-emerald-200";
     if (status === "rejected")
@@ -685,7 +691,7 @@ export default function WardenDashboard() {
   };
 
   const statusDot = (status: string) => {
-    if (status === "approved" || status === "assigned" || status === "rejected")
+    if (status === "withdrawn" || status === "approved" || status === "assigned" || status === "rejected")
       return "bg-white";
     if (status === "reapplied")
       return "bg-blue-600 animate-pulse";
@@ -914,6 +920,7 @@ export default function WardenDashboard() {
               <option value="approved">Approved</option>
               <option value="assigned">Assigned</option>
               <option value="rejected">Rejected</option>
+              <option value="withdrawn">Withdrawn</option>
             </select>
 
             <input
@@ -1213,12 +1220,12 @@ export default function WardenDashboard() {
                           {formatDate(student.applyDate)}
                         </p>
                         <div
-                          className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(student.status)}`}
+                          className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(student))}`}
                         >
                           <div
-                            className={`w-1.5 h-1.5 rounded-full ${statusDot(student.status)}`}
+                            className={`w-1.5 h-1.5 rounded-full ${statusDot(getDisplayStatus(student))}`}
                           />
-                          {student.status || "pending"}
+                          {getDisplayStatus(student)}
                         </div>
                       </div>
                     </button>
@@ -1246,12 +1253,12 @@ export default function WardenDashboard() {
                         <span>·</span>
                         <span>Applied: {formatDate(selectedStudent.applyDate)}</span>
                         <span
-                          className={`ml-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(selectedStudent.status)}`}
+                          className={`ml-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(selectedStudent))}`}
                         >
                           <div
-                            className={`w-1 h-1 rounded-full ${statusDot(selectedStudent.status)}`}
+                            className={`w-1 h-1 rounded-full ${statusDot(getDisplayStatus(selectedStudent))}`}
                           />
-                          {selectedStudent.status || "pending"}
+                          {getDisplayStatus(selectedStudent)}
                         </span>
                         {selectedStudent.rejectRemark && (
                           <span className="ml-2 text-[10px] text-red-500 font-bold uppercase tracking-tight">
