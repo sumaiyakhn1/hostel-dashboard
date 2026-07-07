@@ -133,7 +133,7 @@ export default function WardenDashboard() {
     try {
       const data = await hostelService.getHostelRooms({
         entity: ENTITY_ID,
-        session: "2025-26 Even",
+        session: "2026-27 Odd",
         hostel: wing,
         roomType,
       });
@@ -149,7 +149,7 @@ export default function WardenDashboard() {
     try {
       const data = await hostelService.getHostelRooms({
         entity: ENTITY_ID,
-        session: "2025-26 Even",
+        session: "2026-27 Odd",
         hostel: wing,
         roomType,
       });
@@ -167,7 +167,7 @@ export default function WardenDashboard() {
     try {
       const payload = {
         entity: ENTITY_ID,
-        session: "2025-26 Even",
+        session: "2026-27 Odd",
         course: ["all"],
         batch: ["all"],
         hostel: [reportForm.wing],

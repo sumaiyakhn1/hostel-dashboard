@@ -189,7 +189,7 @@ export default function HostelDashboard() {
   const [masterData, setMasterData] = useState<HostelMasterData | null>(null);
 
   const savedEntityId = localStorage.getItem("student_entity_id") || "5ea04b2f774faa5d67505ab2";
-  const savedSession = localStorage.getItem("student_session") || "2025-26 Even";
+  const savedSession = localStorage.getItem("student_session") || "2026-27 Odd";
   const savedCollegeName = localStorage.getItem("student_college_name") || "";
 
   const [form, setForm] = useState({

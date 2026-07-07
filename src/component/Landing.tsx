@@ -7,13 +7,13 @@ const SCHOOLS = [
     id: "JMIETI",
     name: "JMIETI (Jai Parkash Mukand Lal Innovative Eng & Tech)",
     entityId: "5ea04b2f774faa5d67505ab2",
-    session: "2025-26 Even"
+    session: "2026-27 Odd"
   },
   {
     id: "JMIT",
     name: "JMIT (Seth Jai Parkash Mukand Lal Inst of Eng & Tech)",
     entityId: "5e74b933c14d052673463fd3",
-    session: "2025-26 Even"
+    session: "2026-27 ODD"
   }
 ];
 
