@@ -258,7 +258,7 @@ export default function HostelDashboard() {
 
   const getFilteredBeds = (roomName: string) => {
     const room = availableRooms.find((r: any) => r.roomName === roomName);
-    if (!room || !room.beds) return [];
+    if (!room || !room.beds || room.available === false) return [];
 
     return room.beds.filter((b: any) => b.bedStatus !== "Assigned" && !heldBeds.some((hb) => hb.roomName === roomName && hb.bedName === b.bedName));
   };

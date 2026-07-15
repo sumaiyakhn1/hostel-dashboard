@@ -77,6 +77,12 @@ export const hostelService = {
     roomType: string;
   }) => {
     const response = await api.get(`/api/list/hostelRoom`, { params });
+    if (Array.isArray(response.data)) {
+      return response.data.filter((room: any) => room.available !== false);
+    } else if (response.data && Array.isArray(response.data.data)) {
+      response.data.data = response.data.data.filter((room: any) => room.available !== false);
+      return response.data;
+    }
     return response.data;
   },
 
