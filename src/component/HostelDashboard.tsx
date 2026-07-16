@@ -231,7 +231,7 @@ export default function HostelDashboard() {
     setError("");
     try {
       // Parallelize to avoid head-of-line blocking
-      const [data, _, heldRooms] = await Promise.all([
+      const [data, allStudents, heldRooms] = await Promise.all([
         hostelService.getHostelMaster(savedEntityId).catch((err) => {
           console.error("Master data fetch failed:", err);
           return null;
@@ -247,7 +247,20 @@ export default function HostelDashboard() {
       ]);
 
       if (data) setMasterData(data);
-      if (heldRooms) setHeldBeds(heldRooms.map((r: any) => ({ roomName: r.roomName, bedName: r.bedName })));
+      let newHeldBeds: { roomName: string; bedName: string }[] = [];
+      if (heldRooms) {
+        newHeldBeds = heldRooms.map((r: any) => ({ roomName: r.roomName, bedName: r.bedName }));
+      }
+      if (allStudents && Array.isArray(allStudents)) {
+        allStudents.forEach((s: any) => {
+          if (s.regNumber !== effectiveRegNo && (s.status === "pending" || s.status === "reapplied" || s.status === "approved" || s.status === "assigned")) {
+            if (s.roomNo && s.bedNo) {
+              newHeldBeds.push({ roomName: s.roomNo, bedName: s.bedNo });
+            }
+          }
+        });
+      }
+      setHeldBeds(newHeldBeds);
     } catch (err) {
       console.error("Main fetch error:", err);
       setError("Failed to load hostel data.");
