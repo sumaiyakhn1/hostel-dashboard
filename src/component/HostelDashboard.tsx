@@ -209,7 +209,7 @@ export default function HostelDashboard() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [hasExistingRecord, setHasExistingRecord] = useState(false);
-  const [hasReapplied, setHasReapplied] = useState(false);
+
   const [erpHostelAssigned, setErpHostelAssigned] = useState(false);
   const [erpHostelData, setErpHostelData] = useState<any>(null);
   const [heldBeds, setHeldBeds] = useState<{ roomName: string; bedName: string }[]>([]);
@@ -310,7 +310,7 @@ export default function HostelDashboard() {
       const localData = await hostelService.getStudentFromDB(form.regNo);
       if (localData) {
         setHasExistingRecord(true);
-        if (localData.hasReapplied) setHasReapplied(true);
+        // if (localData.hasReapplied) setHasReapplied(true);
         setLocalStatus(localData.roomType === "Withdrawn" ? "withdrawn" : localData.status || "pending");
         if (localData.rejectRemark) setRejectRemark(localData.rejectRemark);
         setForm((prev) => ({
@@ -1154,7 +1154,7 @@ export default function HostelDashboard() {
                 )}
 
                 {/* CTA button */}
-                {localStatus === "rejected" && !hasReapplied ? (
+                {localStatus === "rejected" ? (
                   <button
                     onClick={() => {
                       setLocalStatus("reapplying");
