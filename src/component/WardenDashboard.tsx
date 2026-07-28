@@ -43,7 +43,6 @@ export default function WardenDashboard() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
 
   const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(
@@ -481,29 +480,29 @@ export default function WardenDashboard() {
           updates.paymentFreq = erpData.hostelPaymentFrequency;
           isChanged = true;
         }
-        
+
         const formatDateForInput = (timestamp: any) => {
-            if (!timestamp) return "";
-            const d = new Date(timestamp);
-            if (isNaN(d.getTime())) return "";
-            return d.toISOString().split('T')[0];
+          if (!timestamp) return "";
+          const d = new Date(timestamp);
+          if (isNaN(d.getTime())) return "";
+          return d.toISOString().split('T')[0];
         };
 
         const erpStartDate = formatDateForInput(erpData.hostelStartDate);
         if (erpStartDate && selectedStudent.startDate !== erpStartDate) {
-           updates.startDate = erpStartDate;
-           isChanged = true;
+          updates.startDate = erpStartDate;
+          isChanged = true;
         }
 
         const erpEndDate = formatDateForInput(erpData.hostelEndDate);
         if (erpEndDate && selectedStudent.endDate !== erpEndDate) {
-           updates.endDate = erpEndDate;
-           isChanged = true;
+          updates.endDate = erpEndDate;
+          isChanged = true;
         }
 
         if (selectedStudent.status !== "assigned") {
-           updates.status = "assigned";
-           isChanged = true;
+          updates.status = "assigned";
+          isChanged = true;
         }
       }
 
@@ -597,12 +596,10 @@ export default function WardenDashboard() {
       (s.roomNo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.wing || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || getDisplayStatus(s) === statusFilter;
-
     // Compare date part only (YYYY-MM-DD)
     const matchesDate = !dateFilter || (s.applyDate && s.applyDate.startsWith(dateFilter));
 
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesDate;
   });
 
   const formatDate = (dateStr: string) => {
@@ -638,6 +635,45 @@ export default function WardenDashboard() {
     if (status === "reapplied")
       return "bg-blue-600 animate-pulse";
     return "bg-amber-600 animate-ping";
+  };
+
+  const exportToExcel = () => {
+    const headers = [
+      "Reg No", "Name", "College", "Apply Date", "Session",
+      "Wing", "Room No", "Bed No", "Room Type", "Frequency",
+      "Start Date", "End Date", "Remark", "Status"
+    ];
+
+    const rows = filteredStudents.map(s => [
+      s.regNumber || "-",
+      s.name || "-",
+      getCollegeName(s) || "-",
+      formatDate(s.applyDate) || "-",
+      s.session || "-",
+      s.wing || "-",
+      s.roomNo || "-",
+      s.bedNo || "-",
+      s.roomType || "-",
+      s.paymentFreq || "-",
+      formatDate(s.startDate) || "-",
+      formatDate(s.endDate) || "-",
+      s.remark || "-",
+      getDisplayStatus(s) || "-"
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Full_Registry_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -838,20 +874,6 @@ export default function WardenDashboard() {
           </div>
 
           <div className="flex gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-3 bg-white border-2 border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-red-500/50 shadow-xl shadow-slate-200/20 transition-all cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="reapplied">Reapplied</option>
-              <option value="approved">Approved</option>
-              <option value="assigned">Assigned</option>
-              <option value="rejected">Rejected</option>
-              <option value="withdrawn">Withdrawn</option>
-            </select>
-
             <input
               type="date"
               value={dateFilter}
@@ -863,481 +885,479 @@ export default function WardenDashboard() {
       </div>
 
 
-{/* Applications + Detail panel */}
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Left: Applications List */}
-            <div className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  Applications
-                </h2>
-                <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full">
-                  {filteredStudents.length}
-                </span>
-              </div>
-              {loading ? (
-                <div className="p-6 space-y-3">
-                  {Array(5)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div
-                        key={i}
-                        className="animate-pulse h-14 bg-slate-100 rounded-xl"
-                      />
-                    ))}
-                </div>
-              ) : filteredStudents.length === 0 ? (
-                <div className="p-10 text-center">
-                  <p className="text-slate-400 font-black">No applications yet.</p>
-                  <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mt-1">
-                    Waiting for registrations...
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
-                  {filteredStudents.slice(0, 5).map((student, index) => (
-                    <button
-                      key={student._id}
-                      onClick={() => handleStudentClick(student)}
-                      className={`w-full text-left px-5 py-4 flex items-center gap-3 transition-all hover:bg-slate-50 ${selectedStudent?._id === student._id ? "bg-red-50 border-l-4 border-red-500" : ""}`}
-                    >
-                      <span className="text-[11px] font-black text-slate-300 w-5 flex-shrink-0 text-right">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-slate-900 truncate">
-                          {student.name || student.regNumber}
-                        </p>
-                        <p className="text-[9px] text-orange-500 font-bold uppercase tracking-wider truncate mb-0.5">
-                          {getCollegeName(student)}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
-                          {student.regNumber}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0 text-right">
-                        <p className="text-[10px] font-black text-slate-500">
-                          {formatDate(student.applyDate)}
-                        </p>
-                        <div
-                          className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(student))}`}
-                        >
-                          <div
-                            className={`w-1.5 h-1.5 rounded-full ${statusDot(getDisplayStatus(student))}`}
-                          />
-                          {getDisplayStatus(student)}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Right: Detail + Actions */}
-            <div className="lg:col-span-2">
-              {selectedStudent ? (
-                <div className="bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl overflow-hidden">
-                  <div className="px-8 py-5 border-b border-slate-100 flex items-start justify-between">
-                    <div className="flex-1 pr-4">
-                      <h2 className="text-xl font-black text-slate-900 mb-0.5">
-                        {selectedStudent.name || "Student Detail"}
-                      </h2>
-                      <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2.5">
-                        {getCollegeName(selectedStudent)}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
-                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                          {selectedStudent.regNumber}
-                        </span>
-                        <span>·</span>
-                        <span>Applied: {formatDate(selectedStudent.applyDate)}</span>
-                        <span
-                          className={`ml-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(selectedStudent))}`}
-                        >
-                          <div
-                            className={`w-1 h-1 rounded-full ${statusDot(getDisplayStatus(selectedStudent))}`}
-                          />
-                          {getDisplayStatus(selectedStudent)}
-                        </span>
-                        {selectedStudent.rejectRemark && (
-                          <span className="ml-2 text-[10px] text-red-500 font-bold uppercase tracking-tight">
-                            · {selectedStudent.rejectRemark}
-                          </span>
-                        )}
-                      </div>
-
-                      {(selectedErpStudent?.course || selectedErpStudent?.stream) && (
-                        <p className="text-xs font-bold text-slate-700 mb-1.5">
-                          {selectedErpStudent.course}
-                          {selectedErpStudent.stream ? ` • ${selectedErpStudent.stream}` : ""}
-                        </p>
-                      )}
-
-                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500">
-                        {selectedErpStudent?.batch && (
-                          <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                            Batch: {selectedErpStudent.batch}
-                          </span>
-                        )}
-                        {selectedErpStudent?.section && (
-                          <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                            Sec: {selectedErpStudent.section}
-                          </span>
-                        )}
-                        {selectedErpStudent?.phone && (
-                          <span className="flex items-center gap-1.5 text-slate-600">
-                            <span>📞</span> {selectedErpStudent.phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={closeModal}
-                      className="text-slate-300 hover:text-red-500 transition-colors p-2"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2.5"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                        Application Details
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={handleSyncERP}
-                          disabled={!!processingId}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all disabled:opacity-50"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          {processingId ? "Syncing..." : "Sync ERP"}
-                        </button>
-                        <button
-                          onClick={handleModalEditToggle}
-                          className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors"
-                        >
-                          {isModalEditing ? "Cancel" : "Edit"}
-                        </button>
-                        {selectedStudent.status === "assigned" && (
-                          <button
-                            onClick={() => handleERPRedirect(selectedStudent)}
-                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-red-100 hover:bg-red-600 active:scale-95 transition-all"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                      {isModalEditing ? (
-                        <>
-                          {/* Editable Fields in Modal */}
-                          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Session</p>
-                            <p className="text-sm font-black text-slate-800">{editForm.session}</p>
-                          </div>
-                          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Wing</p>
-                            <select
-                              className="w-full text-sm font-black bg-transparent outline-none"
-                              value={editForm.wing}
-                              onChange={(e) => setEditForm({ ...editForm, wing: e.target.value, roomType: "", roomNo: "", bedNo: "" })}
-                            >
-                              <option value="">Select Wing</option>
-                              {masterData?.hostel.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.wing || "—"}</p>
-                          </div>
-                          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Room Type</p>
-                            <select
-                              className="w-full text-sm font-black bg-transparent outline-none"
-                              value={editForm.roomType}
-                              onChange={(e) => setEditForm({ ...editForm, roomType: e.target.value, roomNo: "", bedNo: "" })}
-                            >
-                              <option value="">Select Type</option>
-                              {masterData?.roomType.map(rt => <option key={rt} value={rt}>{rt}</option>)}
-                            </select>
-                            <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.roomType || "—"}</p>
-                          </div>
-                          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Room No</p>
-                            <select
-                              className="w-full text-xs font-black bg-transparent outline-none"
-                              value={editForm?.roomNo || ""}
-                              onChange={(e) => setEditForm({ ...editForm, roomNo: e.target.value, bedNo: "" })}
-                            >
-                              <option value="">Select Room</option>
-                              {editForm && getFilteredRooms(editForm._id).map((rn: any) => (
-                                <option key={rn} value={rn}>{rn}</option>
-                              ))}
-                            </select>
-                            <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.roomNo || "—"}</p>
-                          </div>
-                          <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Bed No</p>
-                            <select
-                              className="w-full text-xs font-black bg-transparent outline-none"
-                              value={editForm?.bedNo || ""}
-                              onChange={(e) => setEditForm({ ...editForm, bedNo: e.target.value })}
-                            >
-                              <option value="">Select Bed</option>
-                              {editForm && getFilteredBeds(editForm.roomNo, editForm._id).map((b: any) => (
-                                <option key={b.bedName} value={b.bedName}>{b.bedName}</option>
-                              ))}
-                            </select>
-                            <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.bedNo || "—"}</p>
-                          </div>
-                          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 col-span-2 sm:col-span-3">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Remark</p>
-                            <p className="text-sm font-black text-slate-800">{editForm?.remark || "—"}</p>
-                          </div>
-                          <div className="col-span-2 sm:col-span-3">
-                            <button
-                              onClick={handleModalSave}
-                              className="w-full bg-slate-900 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
-                            >
-                              {processingId ? "Saving..." : "Save Changes"}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {[
-                            { label: "Session", value: selectedStudent?.session },
-                            { label: "Wing", value: selectedStudent?.wing },
-                            { label: "Room Type", value: selectedStudent?.roomType },
-                            { label: "Room No", value: selectedStudent?.roomNo },
-                            { label: "Bed No", value: selectedStudent?.bedNo },
-                            { label: "Remark", value: selectedStudent?.remark || "—" },
-                          ].map(({ label, value }) => (
-                            <div
-                              key={label}
-                              className={`bg-slate-50 rounded-xl p-2.5 border border-slate-100 ${label === "Remark" ? "col-span-2 sm:col-span-3" : ""}`}
-                            >
-                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
-                                {label}
-                              </p>
-                              <p className="text-xs font-black text-slate-800 leading-tight">
-                                {value || "—"}
-                              </p>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-
-                    {(selectedStudent.status === "pending" || selectedStudent.status === "reapplied") && (
-                      <div className="mt-4 pt-4 border-t border-slate-100 animate-slideUp">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                          Final ERP Configuration
-                        </p>
-                        {showRejectBox ? (
-                          <div className="space-y-3">
-                            <textarea
-                              value={rejectRemark}
-                              onChange={(e) => setRejectRemark(e.target.value)}
-                              placeholder="Reason for rejection..."
-                              className="w-full p-3 border border-red-100 rounded-xl text-xs font-bold bg-red-50/30 outline-none focus:ring-2 focus:ring-red-100 transition-all resize-none"
-                              rows={2}
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={handleReject}
-                                disabled={!!processingId || !rejectRemark.trim()}
-                                className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:grayscale"
-                              >
-                                {processingId ? "Processing..." : "Confirm Reject"}
-                              </button>
-                              <button
-                                onClick={() => setShowRejectBox(false)}
-                                className="border border-slate-200 text-slate-400 px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:text-slate-600 transition-all"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-                                  Start Date
-                                </label>
-                                <input
-                                  type="date"
-                                  className="w-full bg-transparent text-xs font-bold outline-none"
-                                  value={approveStartDate}
-                                  onChange={(e) => setApproveStartDate(e.target.value)}
-                                />
-                              </div>
-                              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-                                  End Date
-                                </label>
-                                <input
-                                  type="date"
-                                  className="w-full bg-transparent text-xs font-bold outline-none"
-                                  value={approveEndDate}
-                                  onChange={(e) => setApproveEndDate(e.target.value)}
-                                />
-                              </div>
-                              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
-                                  Frequency
-                                </label>
-                                <select
-                                  className="w-full bg-transparent text-xs font-bold outline-none"
-                                  value={approvePaymentFreq}
-                                  onChange={(e) => setApprovePaymentFreq(e.target.value)}
-                                >
-                                  <option value="">Select Frequency</option>
-                                  {masterData?.paymentFrequency.map((pf) => (
-                                    <option key={pf} value={pf}>
-                                      {pf}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={async () => {
-                                  if (!selectedStudent) return;
-                                  if (!approveStartDate || !approveEndDate || !approvePaymentFreq) {
-                                    alert("Please set the dates and frequency first.");
-                                    return;
-                                  }
-                                  const updatedStudent = {
-                                    ...selectedStudent,
-                                    startDate: approveStartDate,
-                                    endDate: approveEndDate,
-                                    paymentFreq: approvePaymentFreq,
-                                  };
-                                  await handleAssignToERP(updatedStudent);
-                                }}
-                                disabled={!!processingId}
-                                className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
-                              >
-                                {processingId ? (
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <>
-                                    <span>Finalize & Push to ERP</span>
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="w-3 h-3"
-                                    >
-                                      <path d="M5 12h14M12 5l7 7-7 7" />
-                                    </svg>
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setShowRejectBox(true)}
-                                className="bg-red-50 text-red-600 border border-red-100 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {selectedStudent.history && selectedStudent.history.length > 0 && (
-                      <div className="mt-6 pt-4 border-t border-slate-100 animate-slideUp">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                          Application Timeline
-                        </p>
-                        <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:ml-[7px] md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-slate-200 before:to-slate-200">
-                          {selectedStudent.history.map((hist, i) => (
-                            <div key={i} className="relative flex items-center gap-4 group">
-                              <div className="flex items-center justify-center w-4 h-4 rounded-full border-2 border-white bg-orange-500 shadow shrink-0 z-10" />
-                              <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center justify-between space-x-2 mb-1">
-                                  <div className="font-bold text-slate-800 text-xs">{hist.action}</div>
-                                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                    {new Date(hist.updatedAt).toLocaleString("en-IN", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      hour: "2-digit",
-                                      minute: "2-digit"
-                                    })}
-                                  </div>
-                                </div>
-                                <div className="text-[10px] text-slate-500 font-medium">
-                                  <span className="font-bold text-slate-600">Wing:</span> {hist.wing} &nbsp;·&nbsp;
-                                  <span className="font-bold text-slate-600">Type:</span> {hist.roomType} &nbsp;·&nbsp;
-                                  <span className="font-bold text-slate-600">Room:</span> {hist.roomNo} &nbsp;·&nbsp;
-                                  <span className="font-bold text-slate-600">Bed:</span> {hist.bedNo}
-                                  {hist.remark && <><br /><span className="italic text-slate-400">Remark: {hist.remark}</span></>}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl h-full min-h-[400px] flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                      📋
-                    </div>
-                    <p className="text-slate-400 font-black text-lg">
-                      Select an Application
-                    </p>
-                    <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mt-2">
-                      Click a student from the left to review
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+      {/* Applications + Detail panel */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Left: Applications List */}
+        <div className="lg:col-span-1 bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+              Applications
+            </h2>
+            <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full">
+              {filteredStudents.length}
+            </span>
           </div>
+          {loading ? (
+            <div className="p-6 space-y-3">
+              {Array(5)
+                .fill(0)
+                .map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse h-14 bg-slate-100 rounded-xl"
+                  />
+                ))}
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="p-10 text-center">
+              <p className="text-slate-400 font-black">No applications yet.</p>
+              <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mt-1">
+                Waiting for registrations...
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
+              {filteredStudents.slice(0, 5).map((student, index) => (
+                <button
+                  key={student._id}
+                  onClick={() => handleStudentClick(student)}
+                  className={`w-full text-left px-5 py-4 flex items-center gap-3 transition-all hover:bg-slate-50 ${selectedStudent?._id === student._id ? "bg-red-50 border-l-4 border-red-500" : ""}`}
+                >
+                  <span className="text-[11px] font-black text-slate-300 w-5 flex-shrink-0 text-right">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-900 truncate">
+                      {student.name || student.regNumber}
+                    </p>
+                    <p className="text-[9px] text-orange-500 font-bold uppercase tracking-wider truncate mb-0.5">
+                      {getCollegeName(student)}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                      {student.regNumber}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-[10px] font-black text-slate-500">
+                      {formatDate(student.applyDate)}
+                    </p>
+                    <div
+                      className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(student))}`}
+                    >
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full ${statusDot(getDisplayStatus(student))}`}
+                      />
+                      {getDisplayStatus(student)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          
+        {/* Right: Detail + Actions */}
+        <div className="lg:col-span-2">
+          {selectedStudent ? (
+            <div className="bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl overflow-hidden">
+              <div className="px-8 py-5 border-b border-slate-100 flex items-start justify-between">
+                <div className="flex-1 pr-4">
+                  <h2 className="text-xl font-black text-slate-900 mb-0.5">
+                    {selectedStudent.name || "Student Detail"}
+                  </h2>
+                  <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2.5">
+                    {getCollegeName(selectedStudent)}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
+                    <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                      {selectedStudent.regNumber}
+                    </span>
+                    <span>·</span>
+                    <span>Applied: {formatDate(selectedStudent.applyDate)}</span>
+                    <span
+                      className={`ml-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${statusColor(getDisplayStatus(selectedStudent))}`}
+                    >
+                      <div
+                        className={`w-1 h-1 rounded-full ${statusDot(getDisplayStatus(selectedStudent))}`}
+                      />
+                      {getDisplayStatus(selectedStudent)}
+                    </span>
+                    {selectedStudent.rejectRemark && (
+                      <span className="ml-2 text-[10px] text-red-500 font-bold uppercase tracking-tight">
+                        · {selectedStudent.rejectRemark}
+                      </span>
+                    )}
+                  </div>
+
+                  {(selectedErpStudent?.course || selectedErpStudent?.stream) && (
+                    <p className="text-xs font-bold text-slate-700 mb-1.5">
+                      {selectedErpStudent.course}
+                      {selectedErpStudent.stream ? ` • ${selectedErpStudent.stream}` : ""}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500">
+                    {selectedErpStudent?.batch && (
+                      <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        Batch: {selectedErpStudent.batch}
+                      </span>
+                    )}
+                    {selectedErpStudent?.section && (
+                      <span className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        Sec: {selectedErpStudent.section}
+                      </span>
+                    )}
+                    {selectedErpStudent?.phone && (
+                      <span className="flex items-center gap-1.5 text-slate-600">
+                        <span>📞</span> {selectedErpStudent.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="text-slate-300 hover:text-red-500 transition-colors p-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    Application Details
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSyncERP}
+                      disabled={!!processingId}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all disabled:opacity-50"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      {processingId ? "Syncing..." : "Sync ERP"}
+                    </button>
+                    <button
+                      onClick={handleModalEditToggle}
+                      className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors"
+                    >
+                      {isModalEditing ? "Cancel" : "Edit"}
+                    </button>
+                    {selectedStudent.status === "assigned" && (
+                      <button
+                        onClick={() => handleERPRedirect(selectedStudent)}
+                        className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md shadow-red-100 hover:bg-red-600 active:scale-95 transition-all"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                  {isModalEditing ? (
+                    <>
+                      {/* Editable Fields in Modal */}
+                      <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Session</p>
+                        <p className="text-sm font-black text-slate-800">{editForm.session}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Wing</p>
+                        <select
+                          className="w-full text-sm font-black bg-transparent outline-none"
+                          value={editForm.wing}
+                          onChange={(e) => setEditForm({ ...editForm, wing: e.target.value, roomType: "", roomNo: "", bedNo: "" })}
+                        >
+                          <option value="">Select Wing</option>
+                          {masterData?.hostel.map(h => <option key={h} value={h}>{h}</option>)}
+                        </select>
+                        <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.wing || "—"}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Room Type</p>
+                        <select
+                          className="w-full text-sm font-black bg-transparent outline-none"
+                          value={editForm.roomType}
+                          onChange={(e) => setEditForm({ ...editForm, roomType: e.target.value, roomNo: "", bedNo: "" })}
+                        >
+                          <option value="">Select Type</option>
+                          {masterData?.roomType.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+                        </select>
+                        <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.roomType || "—"}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Room No</p>
+                        <select
+                          className="w-full text-xs font-black bg-transparent outline-none"
+                          value={editForm?.roomNo || ""}
+                          onChange={(e) => setEditForm({ ...editForm, roomNo: e.target.value, bedNo: "" })}
+                        >
+                          <option value="">Select Room</option>
+                          {editForm && getFilteredRooms(editForm._id).map((rn: any) => (
+                            <option key={rn} value={rn}>{rn}</option>
+                          ))}
+                        </select>
+                        <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.roomNo || "—"}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Bed No</p>
+                        <select
+                          className="w-full text-xs font-black bg-transparent outline-none"
+                          value={editForm?.bedNo || ""}
+                          onChange={(e) => setEditForm({ ...editForm, bedNo: e.target.value })}
+                        >
+                          <option value="">Select Bed</option>
+                          {editForm && getFilteredBeds(editForm.roomNo, editForm._id).map((b: any) => (
+                            <option key={b.bedName} value={b.bedName}>{b.bedName}</option>
+                          ))}
+                        </select>
+                        <p className="text-[8px] text-slate-400 mt-1 uppercase font-bold">Prev: {selectedStudent?.bedNo || "—"}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 col-span-2 sm:col-span-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Remark</p>
+                        <p className="text-sm font-black text-slate-800">{editForm?.remark || "—"}</p>
+                      </div>
+                      <div className="col-span-2 sm:col-span-3">
+                        <button
+                          onClick={handleModalSave}
+                          className="w-full bg-slate-900 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                        >
+                          {processingId ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {[
+                        { label: "Session", value: selectedStudent?.session },
+                        { label: "Wing", value: selectedStudent?.wing },
+                        { label: "Room Type", value: selectedStudent?.roomType },
+                        { label: "Room No", value: selectedStudent?.roomNo },
+                        { label: "Bed No", value: selectedStudent?.bedNo },
+                        { label: "Remark", value: selectedStudent?.remark || "—" },
+                      ].map(({ label, value }) => (
+                        <div
+                          key={label}
+                          className={`bg-slate-50 rounded-xl p-2.5 border border-slate-100 ${label === "Remark" ? "col-span-2 sm:col-span-3" : ""}`}
+                        >
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                            {label}
+                          </p>
+                          <p className="text-xs font-black text-slate-800 leading-tight">
+                            {value || "—"}
+                          </p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+
+                {(selectedStudent.status === "pending" || selectedStudent.status === "reapplied") && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 animate-slideUp">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                      Final ERP Configuration
+                    </p>
+                    {showRejectBox ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={rejectRemark}
+                          onChange={(e) => setRejectRemark(e.target.value)}
+                          placeholder="Reason for rejection..."
+                          className="w-full p-3 border border-red-100 rounded-xl text-xs font-bold bg-red-50/30 outline-none focus:ring-2 focus:ring-red-100 transition-all resize-none"
+                          rows={2}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleReject}
+                            disabled={!!processingId || !rejectRemark.trim()}
+                            className="bg-red-600 text-white px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:grayscale"
+                          >
+                            {processingId ? "Processing..." : "Confirm Reject"}
+                          </button>
+                          <button
+                            onClick={() => setShowRejectBox(false)}
+                            className="border border-slate-200 text-slate-400 px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:text-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                            <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                              Start Date
+                            </label>
+                            <input
+                              type="date"
+                              className="w-full bg-transparent text-xs font-bold outline-none"
+                              value={approveStartDate}
+                              onChange={(e) => setApproveStartDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                            <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                              End Date
+                            </label>
+                            <input
+                              type="date"
+                              className="w-full bg-transparent text-xs font-bold outline-none"
+                              value={approveEndDate}
+                              onChange={(e) => setApproveEndDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                            <label className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                              Frequency
+                            </label>
+                            <select
+                              className="w-full bg-transparent text-xs font-bold outline-none"
+                              value={approvePaymentFreq}
+                              onChange={(e) => setApprovePaymentFreq(e.target.value)}
+                            >
+                              <option value="">Select Frequency</option>
+                              {masterData?.paymentFrequency.map((pf) => (
+                                <option key={pf} value={pf}>
+                                  {pf}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={async () => {
+                              if (!selectedStudent) return;
+                              if (!approveStartDate || !approveEndDate || !approvePaymentFreq) {
+                                alert("Please set the dates and frequency first.");
+                                return;
+                              }
+                              const updatedStudent = {
+                                ...selectedStudent,
+                                startDate: approveStartDate,
+                                endDate: approveEndDate,
+                                paymentFreq: approvePaymentFreq,
+                              };
+                              await handleAssignToERP(updatedStudent);
+                            }}
+                            disabled={!!processingId}
+                            className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                          >
+                            {processingId ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <>
+                                <span>Finalize & Push to ERP</span>
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="w-3 h-3"
+                                >
+                                  <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setShowRejectBox(true)}
+                            className="bg-red-50 text-red-600 border border-red-100 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedStudent.history && selectedStudent.history.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-slate-100 animate-slideUp">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                      Application Timeline
+                    </p>
+                    <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:ml-[7px] md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-slate-200 before:to-slate-200">
+                      {selectedStudent.history.map((hist, i) => (
+                        <div key={i} className="relative flex items-center gap-4 group">
+                          <div className="flex items-center justify-center w-4 h-4 rounded-full border-2 border-white bg-orange-500 shadow shrink-0 z-10" />
+                          <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <div className="flex items-center justify-between space-x-2 mb-1">
+                              <div className="font-bold text-slate-800 text-xs">{hist.action}</div>
+                              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                {new Date(hist.updatedAt).toLocaleString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })}
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-medium">
+                              <span className="font-bold text-slate-600">Wing:</span> {hist.wing} &nbsp;·&nbsp;
+                              <span className="font-bold text-slate-600">Type:</span> {hist.roomType} &nbsp;·&nbsp;
+                              <span className="font-bold text-slate-600">Room:</span> {hist.roomNo} &nbsp;·&nbsp;
+                              <span className="font-bold text-slate-600">Bed:</span> {hist.bedNo}
+                              {hist.remark && <><br /><span className="italic text-slate-400">Remark: {hist.remark}</span></>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/70 backdrop-blur-3xl rounded-[2rem] border border-white shadow-2xl h-full min-h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                  📋
+                </div>
+                <p className="text-slate-400 font-black text-lg">
+                  Select an Application
+                </p>
+                <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mt-2">
+                  Click a student from the left to review
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+
       {/* Tab Switcher */}
       <div className="max-w-7xl mx-auto mb-6 flex gap-4">
         <button
           onClick={() => setActiveTab("allocations")}
-          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            activeTab === "allocations" ? "bg-slate-900 text-white shadow-lg shadow-slate-200" : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
-          }`}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "allocations" ? "bg-slate-900 text-white shadow-lg shadow-slate-200" : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
+            }`}
         >
           Full Registry
         </button>
         <button
           onClick={() => setActiveTab("reports")}
-          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            activeTab === "reports" ? "bg-slate-900 text-white shadow-lg shadow-slate-200" : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
-          }`}
+          className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "reports" ? "bg-slate-900 text-white shadow-lg shadow-slate-200" : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
+            }`}
         >
           Roommates Report
         </button>
@@ -1495,12 +1515,19 @@ export default function WardenDashboard() {
         </div>
       ) : (
         <>
-{/* Full Registry Table */}
+          {/* Full Registry Table */}
           <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-3xl rounded-[3rem] border border-white shadow-2xl overflow-hidden min-h-[60vh]">
-            <div className="px-8 py-5 border-b border-slate-100">
+            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Full Registry
               </h2>
+              <button
+                onClick={exportToExcel}
+                className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-200"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Download Excel
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -1722,7 +1749,7 @@ export default function WardenDashboard() {
                               title="View Details"
                               className="bg-indigo-50 border border-indigo-100 text-indigo-500 p-2 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-xs"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                             </button>
                             {/* Edit is locked once approved/assigned */}
                             {student.status !== "approved" &&

@@ -179,8 +179,8 @@ export default function HostelDashboard() {
   const { regNo: pathRegNo } = useParams<{ regNo: string }>();
   const [searchParams] = useSearchParams();
   const queryRegNo = searchParams.get("regNo");
-  const sanitizedQueryRegNo = queryRegNo?.includes("regNo=") 
-    ? queryRegNo.split("regNo=").pop() 
+  const sanitizedQueryRegNo = queryRegNo?.includes("regNo=")
+    ? queryRegNo.split("regNo=").pop()
     : queryRegNo;
   const effectiveRegNo = pathRegNo || sanitizedQueryRegNo || "";
 
@@ -796,7 +796,7 @@ export default function HostelDashboard() {
             {student && (
               <div className="mb-8 p-6 bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl shadow-slate-200/50">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                  <div 
+                  <div
                     className="w-20 h-20 rounded-[2rem] flex items-center justify-center text-3xl font-black text-white shadow-lg shadow-orange-200 overflow-hidden"
                     style={{ background: ACCENT }}
                   >
@@ -904,34 +904,34 @@ export default function HostelDashboard() {
                         localStatus === "withdrawn"
                           ? "#f8fafc"
                           : localStatus === "approved" || localStatus === "assigned"
-                          ? "#f0fdf4"
-                          : localStatus === "rejected"
-                            ? "#fff1f2"
-                            : localStatus === "reapplying"
-                              ? "#eff6ff"
-                              : "#fffbeb",
+                            ? "#f0fdf4"
+                            : localStatus === "rejected"
+                              ? "#fff1f2"
+                              : localStatus === "reapplying"
+                                ? "#eff6ff"
+                                : "#fffbeb",
                       borderColor:
                         localStatus === "withdrawn"
                           ? "#cbd5e1"
                           : localStatus === "approved" || localStatus === "assigned"
-                          ? "#bbf7d0"
-                          : localStatus === "rejected"
-                            ? "#fecdd3"
-                            : localStatus === "reapplying"
-                              ? "#bfdbfe"
-                              : "#fde68a",
+                            ? "#bbf7d0"
+                            : localStatus === "rejected"
+                              ? "#fecdd3"
+                              : localStatus === "reapplying"
+                                ? "#bfdbfe"
+                                : "#fde68a",
                     }}
                   >
                     <span className="text-2xl flex-shrink-0 mt-0.5">
                       {localStatus === "withdrawn"
                         ? "🛑"
                         : localStatus === "approved" || localStatus === "assigned"
-                        ? "🎉"
-                        : localStatus === "rejected"
-                          ? "❌"
-                          : localStatus === "reapplying"
-                            ? "📝"
-                            : "⏳"}
+                          ? "🎉"
+                          : localStatus === "rejected"
+                            ? "❌"
+                            : localStatus === "reapplying"
+                              ? "📝"
+                              : "⏳"}
                     </span>
                     <div>
                       <p
@@ -941,25 +941,25 @@ export default function HostelDashboard() {
                             localStatus === "withdrawn"
                               ? "#64748b"
                               : localStatus === "approved" || localStatus === "assigned"
-                              ? "#15803d"
-                              : localStatus === "rejected"
-                                ? "#be123c"
-                                : localStatus === "reapplying"
-                                  ? "#1d4ed8"
-                                  : "#92400e",
+                                ? "#15803d"
+                                : localStatus === "rejected"
+                                  ? "#be123c"
+                                  : localStatus === "reapplying"
+                                    ? "#1d4ed8"
+                                    : "#92400e",
                         }}
                       >
                         {localStatus === "withdrawn"
                           ? "Application Withdrawn"
                           : localStatus === "approved" || localStatus === "assigned"
-                          ? "Room Approved by Warden!"
-                          : localStatus === "rejected"
-                            ? "Application Rejected by Warden"
-                            : localStatus === "reapplying"
-                              ? "Re-applying Application"
-                              : localStatus === "reapplied"
-                                ? "Application Re-applied! Pending Review"
-                                : "Pending Warden Approval"}
+                            ? "Room Approved by Warden!"
+                            : localStatus === "rejected"
+                              ? "Application Rejected by Warden"
+                              : localStatus === "reapplying"
+                                ? "Re-applying Application"
+                                : localStatus === "reapplied"
+                                  ? "Application Re-applied! Pending Review"
+                                  : "Pending Warden Approval"}
                       </p>
                       {localStatus === "rejected" && rejectRemark && (
                         <p className="text-xs text-rose-600 font-semibold mt-1">
@@ -1046,8 +1046,8 @@ export default function HostelDashboard() {
                               {field.name === "roomNo" && form.hostel && form.roomType && getFilteredRooms().length === 0
                                 ? "No rooms available."
                                 : field.name === "bedNo" && form.roomNo && getFilteredBeds(form.roomNo).length === 0
-                                ? "No beds available."
-                                : `Select ${field.label}`}
+                                  ? "No beds available."
+                                  : `Select ${field.label}`}
                             </option>
                             {field.options.map((opt: string) => (
                               <option key={opt} value={opt}>
